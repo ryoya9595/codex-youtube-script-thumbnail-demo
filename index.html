@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YouTube台本・サムネ案 自動生成</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="studio">
+      <header class="header">
+        <div>
+          <p class="eyebrow">YouTube Creative Studio</p>
+          <h1>台本・サムネ案 自動生成</h1>
+          <p class="lead">テーマを入力すると、動画構成、見せ場、サムネ案まで一気に整理。</p>
+        </div>
+        <div class="live-badge" id="status">GENERATED</div>
+      </header>
+
+      <section class="workspace">
+        <form class="prompt-panel" id="youtubeForm">
+          <label>
+            <span>動画テーマ</span>
+            <input name="theme" value="CodexでAI副業の作業を自動化する方法" />
+          </label>
+          <div class="field-grid">
+            <label>
+              <span>視聴者</span>
+              <select name="audience">
+                <option>AI副業初心者</option>
+                <option>中級者・講師</option>
+                <option>フリーランス</option>
+              </select>
+            </label>
+            <label>
+              <span>トーン</span>
+              <select name="tone">
+                <option>初心者向けにやさしく</option>
+                <option>危機感強め</option>
+                <option>実演多め</option>
+              </select>
+            </label>
+          </div>
+          <label>
+            <span>入れたい要素</span>
+            <textarea name="points" rows="6">月20ドルで追加課金なし
+画像生成
+コンピューターUSE
+ビジネスツール実演
+セキュリティ設定特典</textarea>
+          </label>
+          <button type="submit">台本とサムネ案を生成</button>
+        </form>
+
+        <section class="output">
+          <article class="script-card" id="scriptOutput"></article>
+          <article class="thumb-board" id="thumbnailOutput"></article>
+        </section>
+      </section>
+    </main>
+    <script src="script.js"></script>
+  </body>
+</html>
