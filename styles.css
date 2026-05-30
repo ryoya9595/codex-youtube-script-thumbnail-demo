@@ -37,6 +37,11 @@ button {
   font-weight: 900;
 }
 
+button.secondary {
+  background: #f4f4f5;
+  color: var(--ink);
+}
+
 .studio {
   width: min(1220px, calc(100vw - 48px));
   margin: 0 auto;
@@ -93,6 +98,7 @@ h3 { font-size: 16px; }
 }
 
 .prompt-panel,
+.title-card,
 .script-card,
 .thumb-board {
   border: 1px solid var(--line);
@@ -105,6 +111,13 @@ h3 { font-size: 16px; }
   position: sticky;
   top: 20px;
   padding: 22px;
+}
+
+.sub-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
 }
 
 label {
@@ -144,8 +157,38 @@ textarea {
   gap: 18px;
 }
 
+.title-card {
+  padding: 24px;
+}
+
 .script-card {
   padding: 24px;
+}
+
+.title-list {
+  display: grid;
+  gap: 9px;
+  margin-bottom: 14px;
+}
+
+.title-item {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fafafa;
+  font-weight: 900;
+  padding: 12px 14px;
+}
+
+.opening-box {
+  border-radius: 8px;
+  background: #fff1f2;
+  padding: 14px;
+}
+
+.opening-box p {
+  margin: 7px 0 0;
+  color: #4b5563;
+  line-height: 1.65;
 }
 
 .section-head {
@@ -243,5 +286,5 @@ textarea {
 @media (max-width: 940px) {
   .header, .workspace { display: grid; grid-template-columns: 1fr; }
   .prompt-panel { position: static; }
-  .thumb-grid, .field-grid { grid-template-columns: 1fr; }
+  .thumb-grid, .field-grid, .sub-actions { grid-template-columns: 1fr; }
 }

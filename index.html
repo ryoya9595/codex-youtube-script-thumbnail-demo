@@ -50,9 +50,14 @@
 セキュリティ設定特典</textarea>
           </label>
           <button type="submit">台本とサムネ案を生成</button>
+          <div class="sub-actions">
+            <button class="secondary" type="button" id="copyPlanButton">企画をコピー</button>
+            <button class="secondary" type="button" id="downloadButton">Markdown保存</button>
+          </div>
         </form>
 
         <section class="output">
+          <article class="title-card" id="titleOutput"></article>
           <article class="script-card" id="scriptOutput"></article>
           <article class="thumb-board" id="thumbnailOutput"></article>
         </section>
