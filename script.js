@@ -8,6 +8,15 @@ const downloadButton = document.querySelector("#downloadButton");
 
 let latestPlan = "";
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 function renderYoutube() {
   const data = Object.fromEntries(new FormData(form).entries());
   const points = String(data.points || "")
@@ -31,11 +40,11 @@ function renderYoutube() {
       <span class="badge">5 ideas</span>
     </div>
     <div class="title-list">
-      ${titles.map((title) => `<div class="title-item">${title}</div>`).join("")}
+      ${titles.map((title) => `<div class="title-item">${escapeHtml(title)}</div>`).join("")}
     </div>
     <div class="opening-box">
       <strong>冒頭30秒トーク</strong>
-      <p>${opening}</p>
+      <p>${escapeHtml(opening)}</p>
     </div>
   `;
 
@@ -51,11 +60,11 @@ function renderYoutube() {
       </div>
       <div class="timeline-item">
         <div class="time">2:00</div>
-        <div><strong>問題提起</strong><p>${data.audience}がつまずく「何をAIに任せればいいか」を先に整理。</p></div>
+        <div><strong>問題提起</strong><p>${escapeHtml(data.audience)}がつまずく「何をAIに任せればいいか」を先に整理。</p></div>
       </div>
       <div class="timeline-item">
         <div class="time">6:00</div>
-        <div><strong>実演</strong><p>${points.slice(0, 4).join("、")}を順番に見せる。</p></div>
+        <div><strong>実演</strong><p>${escapeHtml(points.slice(0, 4).join("、"))}を順番に見せる。</p></div>
       </div>
       <div class="timeline-item">
         <div class="time">18:00</div>
@@ -71,7 +80,7 @@ function renderYoutube() {
   thumbnailOutput.innerHTML = `
     <div class="section-head">
       <h2>サムネ案</h2>
-      <span class="badge">${data.tone}</span>
+      <span class="badge">${escapeHtml(data.tone)}</span>
     </div>
     <div class="thumb-grid">
       <div class="thumb-card"><strong>課金者の9割 損してます</strong><span>ChatGPTだけはもったいない</span></div>
