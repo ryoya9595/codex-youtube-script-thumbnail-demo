@@ -81,6 +81,31 @@ h3 { font-size: 16px; }
   font-size: 16px;
 }
 
+.privacy-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 790px;
+  margin-top: 14px;
+  border: 1px solid #f3d5dc;
+  border-radius: 8px;
+  background: rgba(255,241,242,0.82);
+  color: #6e3f4c;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.5;
+  padding: 10px 12px;
+}
+
+.privacy-note button {
+  min-height: 32px;
+  flex: 0 0 auto;
+  background: #ffe4e9;
+  color: var(--red);
+  font-size: 12px;
+  padding: 0 10px;
+}
+
 .live-badge {
   border-radius: 999px;
   background: var(--dark);
@@ -287,4 +312,5 @@ textarea {
   .header, .workspace { display: grid; grid-template-columns: 1fr; }
   .prompt-panel { position: static; }
   .thumb-grid, .field-grid, .sub-actions { grid-template-columns: 1fr; }
+  .privacy-note { align-items: stretch; flex-direction: column; }
 }

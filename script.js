@@ -5,6 +5,7 @@ const scriptOutput = document.querySelector("#scriptOutput");
 const thumbnailOutput = document.querySelector("#thumbnailOutput");
 const copyPlanButton = document.querySelector("#copyPlanButton");
 const downloadButton = document.querySelector("#downloadButton");
+const clearDataButton = document.querySelector("#clearDataButton");
 
 let latestPlan = "";
 
@@ -149,4 +150,9 @@ downloadButton.addEventListener("click", () => {
   a.click();
   URL.revokeObjectURL(url);
   statusLabel.textContent = "SAVED";
+});
+
+clearDataButton.addEventListener("click", () => {
+  localStorage.removeItem("codex-youtube-plan-demo-v2");
+  statusLabel.textContent = "CLEARED";
 });
