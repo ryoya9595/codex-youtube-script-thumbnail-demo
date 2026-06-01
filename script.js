@@ -1,6 +1,7 @@
 // 台本・タイトル案 自動生成ツール（OpenAI連携・自分のAPIキー使用）
 const LS = {
   key: "codex-yt-openai-key",
+  ytKey: "codex-yt-youtube-key",
   model: "codex-yt-text-model",
   channels: "codex-yt-channels",
   refs: "codex-yt-refs",
@@ -13,7 +14,9 @@ const $ = (id) => document.getElementById(id);
 const keyStatus = $("keyStatus");
 const settingsModal = $("settingsModal");
 const apiKeyInput = $("apiKey");
+const ytKeyInput = $("ytKey");
 const textModelSelect = $("textModel");
+const chanStatus = $("chanStatus");
 const refList = $("refList");
 const chanTabs = $("chanTabs");
 const scriptOutput = $("scriptOutput");
@@ -60,15 +63,20 @@ function setStatus(el, text, kind) {
 function getKey() {
   return (localStorage.getItem(LS.key) || "").trim();
 }
+function getYtKey() {
+  return (localStorage.getItem(LS.ytKey) || "").trim();
+}
 function getModel() {
   return localStorage.getItem(LS.model) || "gpt-4o-mini";
 }
 function refreshKeyStatus() {
+  if (!keyStatus) return;
   keyStatus.textContent = getKey() ? "APIキー: 設定済み ✓" : "APIキー: 未設定";
   keyStatus.classList.toggle("set", !!getKey());
 }
 function openSettings() {
   apiKeyInput.value = getKey();
+  if (ytKeyInput) ytKeyInput.value = getYtKey();
   textModelSelect.value = getModel();
   settingsModal.classList.remove("is-hidden");
 }
@@ -143,6 +151,64 @@ function renderChannels() {
 }
 function persistChannels() {
   localStorage.setItem(LS.channels, JSON.stringify(channels));
+}
+
+// ===== YouTube Data API（URLからタイトル取得） =====
+async function ytApi(path, params) {
+  const key = getYtKey();
+  if (!key) throw new Error("YouTube APIキーが未設定です（⚙設定）");
+  const url = new URL("https://www.googleapis.com/youtube/v3/" + path);
+  Object.entries({ ...params, key }).forEach(([k, v]) => url.searchParams.set(k, v));
+  const res = await fetch(url.toString());
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error("YouTube APIエラー (" + res.status + "): " + ((data.error && data.error.message) || "").slice(0, 200));
+  return data;
+}
+
+function parseChannelInput(input) {
+  const s = input.trim();
+  let u = null;
+  try {
+    u = new URL(s);
+  } catch {
+    if (s.startsWith("@")) return { handle: s };
+    return { search: s };
+  }
+  const parts = u.pathname.split("/").filter(Boolean);
+  const ci = parts.indexOf("channel");
+  if (ci >= 0 && parts[ci + 1]) return { channelId: parts[ci + 1] };
+  const handlePart = parts.find((p) => p.startsWith("@"));
+  if (handlePart) return { handle: handlePart };
+  const ui = parts.indexOf("user");
+  if (ui >= 0 && parts[ui + 1]) return { username: parts[ui + 1] };
+  const cc = parts.indexOf("c");
+  if (cc >= 0 && parts[cc + 1]) return { search: decodeURIComponent(parts[cc + 1]) };
+  if (parts[0]) return { search: decodeURIComponent(parts[0]) };
+  return { search: s };
+}
+
+async function resolveChannel(ref) {
+  let chan;
+  if (ref.channelId) chan = await ytApi("channels", { part: "snippet,contentDetails", id: ref.channelId });
+  else if (ref.handle) chan = await ytApi("channels", { part: "snippet,contentDetails", forHandle: ref.handle });
+  else if (ref.username) chan = await ytApi("channels", { part: "snippet,contentDetails", forUsername: ref.username });
+  else if (ref.search) {
+    const sr = await ytApi("search", { part: "snippet", q: ref.search, type: "channel", maxResults: "1" });
+    const id = sr.items?.[0]?.id?.channelId || sr.items?.[0]?.snippet?.channelId;
+    if (!id) throw new Error("チャンネルが見つかりませんでした");
+    chan = await ytApi("channels", { part: "snippet,contentDetails", id });
+  }
+  const item = chan?.items?.[0];
+  if (!item) throw new Error("チャンネルが見つかりませんでした");
+  return { title: item.snippet.title, uploads: item.contentDetails.relatedPlaylists.uploads };
+}
+
+async function fetchChannelTitles(url) {
+  const ref = parseChannelInput(url);
+  const { title, uploads } = await resolveChannel(ref);
+  const pl = await ytApi("playlistItems", { part: "snippet", playlistId: uploads, maxResults: "10" });
+  const titles = (pl.items || []).map((it) => it.snippet?.title).filter(Boolean);
+  return { title, titles };
 }
 
 // ===== メタ（テーマ等） =====
@@ -316,8 +382,14 @@ $("toggleKey").addEventListener("click", () => {
   apiKeyInput.type = t ? "text" : "password";
   $("toggleKey").textContent = t ? "隠す" : "表示";
 });
+$("toggleYtKey").addEventListener("click", () => {
+  const t = ytKeyInput.type === "password";
+  ytKeyInput.type = t ? "text" : "password";
+  $("toggleYtKey").textContent = t ? "隠す" : "表示";
+});
 $("saveKey").addEventListener("click", () => {
   localStorage.setItem(LS.key, apiKeyInput.value.trim());
+  localStorage.setItem(LS.ytKey, ytKeyInput.value.trim());
   localStorage.setItem(LS.model, textModelSelect.value);
   refreshKeyStatus();
   flashButton($("saveKey"), "保存しました ✓");
@@ -325,9 +397,38 @@ $("saveKey").addEventListener("click", () => {
 });
 $("clearKey").addEventListener("click", () => {
   localStorage.removeItem(LS.key);
+  localStorage.removeItem(LS.ytKey);
   apiKeyInput.value = "";
+  ytKeyInput.value = "";
   refreshKeyStatus();
   flashButton($("clearKey"), "削除しました");
+});
+
+$("fetchChanButton").addEventListener("click", async () => {
+  if (channels.length >= 3) return setStatus(chanStatus, "登録は最大3つです", "err");
+  const url = $("chanUrl").value.trim();
+  if (!url) return setStatus(chanStatus, "チャンネルURLを入力してください", "err");
+  if (!getYtKey()) {
+    setStatus(chanStatus, "⚙設定にYouTube APIキーを登録してください", "err");
+    openSettings();
+    return;
+  }
+  const btn = $("fetchChanButton");
+  btn.disabled = true;
+  setStatus(chanStatus, "取得中…", "loading");
+  try {
+    const { title, titles } = await fetchChannelTitles(url);
+    if (!titles.length) throw new Error("タイトルを取得できませんでした");
+    channels.push({ id: "ch" + Date.now(), name: title, samples: titles.join("\n"), url });
+    persistChannels();
+    renderChannels();
+    $("chanUrl").value = "";
+    setStatus(chanStatus, `「${title}」を登録（タイトル${titles.length}件取得）`, "ok");
+  } catch (e) {
+    setStatus(chanStatus, e.message, "err");
+  } finally {
+    btn.disabled = false;
+  }
 });
 
 refList.addEventListener("input", (e) => {

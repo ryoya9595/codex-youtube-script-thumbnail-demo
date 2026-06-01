@@ -2,7 +2,7 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src https://api.openai.com; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src https://api.openai.com https://www.googleapis.com; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>台本・タイトル案 自動生成ツール</title>
     <link rel="stylesheet" href="styles.css" />
@@ -41,8 +41,15 @@
             <option value="gpt-4o">gpt-4o（高品質・やや高い）</option>
           </select>
         </label>
+        <label>
+          <span>YouTube Data APIキー（参考チャンネルのURL取得用・任意）</span>
+          <div class="key-row">
+            <input type="password" id="ytKey" placeholder="AIza..." autocomplete="off" />
+            <button type="button" id="toggleYtKey" class="secondary">表示</button>
+          </div>
+        </label>
         <p class="modal-note">
-          キーは<strong>このブラウザ内（localStorage）にのみ保存</strong>され、生成時に<strong>OpenAIにのみ送信</strong>されます。当ツールから他へは送信しません。共有PCでは使用後に「キーを削除」してください。
+          キーは<strong>このブラウザ内（localStorage）にのみ保存</strong>され、OpenAI / YouTube の各APIにのみ送信されます。当ツールから他へは送信しません。共有PCでは使用後に「キーを削除」してください。
         </p>
         <div class="modal-actions">
           <button type="button" id="clearKey" class="secondary">キーを削除</button>
@@ -79,12 +86,20 @@
 
         <div class="block">
           <h3>3. タイトル参考チャンネル（最大3つ）</h3>
-          <p class="hint">登録している間、その雰囲気を参考にタイトルを生成します（丸パクリはしません）。代表的なタイトルを数本貼ると精度が上がります。</p>
+          <p class="hint">URLを貼って「取得」すると、そのチャンネルの直近タイトルを自動取得して参考にします（丸パクリはしません）。⚙設定にYouTube APIキーが必要です。</p>
           <div class="chan-tabs" id="chanTabs"></div>
-          <div class="chan-form" id="chanForm">
-            <input id="chanName" placeholder="チャンネル名" />
-            <textarea id="chanSamples" rows="2" placeholder="代表的なタイトルを改行区切りで（任意）"></textarea>
-            <button type="button" id="addChanButton" class="secondary">＋ チャンネルを登録</button>
+          <div class="chan-form">
+            <div class="chan-url-row">
+              <input id="chanUrl" placeholder="チャンネルURL（https://youtube.com/@... 等）" />
+              <button type="button" id="fetchChanButton" class="secondary">取得</button>
+            </div>
+            <div class="status-line small" id="chanStatus"></div>
+            <details class="manual-add">
+              <summary>手動で登録する（API不要）</summary>
+              <input id="chanName" placeholder="チャンネル名" />
+              <textarea id="chanSamples" rows="2" placeholder="代表的なタイトルを改行区切りで"></textarea>
+              <button type="button" id="addChanButton" class="secondary">＋ 手動で登録</button>
+            </details>
           </div>
         </div>
 

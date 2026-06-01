@@ -162,6 +162,13 @@ label > span { font-size: 12px; font-weight: 800; color: var(--muted); }
 .chan-del { min-height: 32px; width: 28px; padding: 0; background: transparent; color: #b06a6a; font-size: 15px; }
 .chan-del:hover { background: transparent; color: var(--accent); }
 .chan-form { display: grid; gap: 8px; }
+.chan-url-row { display: flex; gap: 8px; }
+.chan-url-row input { flex: 1; }
+.chan-url-row button { flex: 0 0 auto; }
+.status-line.small { min-height: 14px; font-size: 11px; margin-bottom: 0; }
+.manual-add { margin-top: 4px; border-top: 1px dashed var(--line); padding-top: 8px; }
+.manual-add summary { cursor: pointer; font-size: 12px; font-weight: 800; color: var(--muted); }
+.manual-add input, .manual-add textarea, .manual-add button { margin-top: 8px; }
 
 /* ===== Actions ===== */
 .block.actions { display: grid; gap: 10px; }
