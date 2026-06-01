@@ -2,72 +2,135 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src https://api.openai.com; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>YouTube台本・サムネ案 自動生成</title>
+    <title>台本・タイトル案 自動生成ツール</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <main class="studio">
-      <header class="header">
-        <div>
-          <p class="eyebrow">YouTube Creative Studio</p>
-          <h1>台本・サムネ案 自動生成</h1>
-          <p class="lead">テーマを入力すると、動画構成、見せ場、サムネ案まで一気に整理。入力内容はブラウザ内に保存されます。</p>
-          <div class="privacy-note">
-            外部送信なし。入力内容はこのブラウザ内にのみ保存されます。共有PCでは使用後に保存データを削除してください。
-            <button type="button" id="clearDataButton">保存データを削除</button>
-          </div>
-        </div>
-        <div class="live-badge" id="status">GENERATED</div>
-      </header>
+    <header class="hero">
+      <div class="hero-text">
+        <p class="eyebrow">YouTube Creative Studio</p>
+        <h1>台本・タイトル案 自動生成ツール</h1>
+        <p class="lead">参考動画の文字起こしを貼って台本を生成 → 台本に合わせてタイトル案を10個。サムネ案も作れます。</p>
+      </div>
+      <div class="hero-actions">
+        <span class="key-status" id="keyStatus">APIキー: 未設定</span>
+        <button type="button" id="openSettings" class="ghost">⚙ 設定</button>
+      </div>
+    </header>
 
-      <section class="workspace">
-        <form class="prompt-panel" id="youtubeForm">
-          <label>
-            <span>動画テーマ</span>
-            <input name="theme" value="CodexでAI副業の作業を自動化する方法" />
-          </label>
-          <div class="field-grid">
-            <label>
-              <span>視聴者</span>
-              <select name="audience">
-                <option>AI副業初心者</option>
-                <option>中級者・講師</option>
-                <option>フリーランス</option>
-              </select>
-            </label>
+    <!-- 設定モーダル -->
+    <div class="modal-overlay is-hidden" id="settingsModal">
+      <div class="modal">
+        <div class="modal-head">
+          <h2>設定（OpenAI APIキー）</h2>
+          <button type="button" id="closeSettings" class="ghost">×</button>
+        </div>
+        <label>
+          <span>OpenAI APIキー</span>
+          <div class="key-row">
+            <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off" />
+            <button type="button" id="toggleKey" class="secondary">表示</button>
+          </div>
+        </label>
+        <label>
+          <span>テキスト生成モデル（台本・タイトル）</span>
+          <select id="textModel">
+            <option value="gpt-4o-mini">gpt-4o-mini（安い・おすすめ）</option>
+            <option value="gpt-4o">gpt-4o（高品質・やや高い）</option>
+          </select>
+        </label>
+        <p class="modal-note">
+          キーは<strong>このブラウザ内（localStorage）にのみ保存</strong>され、生成時に<strong>OpenAIにのみ送信</strong>されます。当ツールから他へは送信しません。共有PCでは使用後に「キーを削除」してください。
+        </p>
+        <div class="modal-actions">
+          <button type="button" id="clearKey" class="secondary">キーを削除</button>
+          <button type="button" id="saveKey">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <main class="layout">
+      <!-- 入力パネル -->
+      <section class="panel input-panel">
+        <div class="block">
+          <h3>1. 動画の方向性</h3>
+          <label><span>動画テーマ</span><input id="theme" placeholder="例：CodexでAI副業の作業を自動化する方法" /></label>
+          <div class="grid2">
+            <label><span>視聴者</span><input id="audience" value="AI副業初心者" /></label>
             <label>
               <span>トーン</span>
-              <select name="tone">
-                <option>初心者向けにやさしく</option>
+              <select id="tone">
+                <option>初心者にやさしく</option>
                 <option>危機感強め</option>
-                <option>実演多め</option>
+                <option>実演・ハウツー多め</option>
+                <option>エンタメ寄り</option>
               </select>
             </label>
           </div>
-          <label>
-            <span>入れたい要素</span>
-            <textarea name="points" rows="6">月20ドルで追加課金なし
-画像生成
-コンピューターUSE
-ビジネスツール実演
-セキュリティ設定特典</textarea>
-          </label>
-          <button type="submit">台本とサムネ案を生成</button>
-          <div class="sub-actions">
-            <button class="secondary" type="button" id="copyPlanButton">企画をコピー</button>
-            <button class="secondary" type="button" id="downloadButton">Markdown保存</button>
-          </div>
-        </form>
+        </div>
 
-        <section class="output">
-          <article class="title-card" id="titleOutput"></article>
-          <article class="script-card" id="scriptOutput"></article>
-          <article class="thumb-board" id="thumbnailOutput"></article>
-        </section>
+        <div class="block">
+          <h3>2. 参考動画（最大3本・文字起こしを貼り付け）</h3>
+          <p class="hint">YouTube Summary拡張やYouTubeの「文字起こし」からコピーして貼り付けてください。URL自動取得はしません。</p>
+          <div id="refList"></div>
+        </div>
+
+        <div class="block">
+          <h3>3. タイトル参考チャンネル（最大3つ）</h3>
+          <p class="hint">登録している間、その雰囲気を参考にタイトルを生成します（丸パクリはしません）。代表的なタイトルを数本貼ると精度が上がります。</p>
+          <div class="chan-tabs" id="chanTabs"></div>
+          <div class="chan-form" id="chanForm">
+            <input id="chanName" placeholder="チャンネル名" />
+            <textarea id="chanSamples" rows="2" placeholder="代表的なタイトルを改行区切りで（任意）"></textarea>
+            <button type="button" id="addChanButton" class="secondary">＋ チャンネルを登録</button>
+          </div>
+        </div>
+
+        <div class="block actions">
+          <button type="button" id="genScriptButton">台本を生成</button>
+          <button type="button" id="genTitlesButton" class="secondary">タイトル案を生成</button>
+          <button type="button" id="genThumbButton" class="secondary">サムネ案を生成</button>
+        </div>
+      </section>
+
+      <!-- 出力パネル -->
+      <section class="panel output-panel">
+        <div class="block">
+          <div class="block-head">
+            <h3>台本</h3>
+            <div class="block-head-actions">
+              <button type="button" id="saveScriptButton" class="secondary">保存</button>
+              <button type="button" id="copyScriptButton" class="secondary">コピー</button>
+            </div>
+          </div>
+          <div class="status-line" id="scriptStatus"></div>
+          <textarea id="scriptOutput" rows="16" placeholder="「台本を生成」を押すと、ここに台本が出ます。編集して「保存」できます。"></textarea>
+        </div>
+
+        <div class="block">
+          <h3>参考動画の構成サマリー</h3>
+          <div id="refSummaries" class="ref-summaries"><p class="muted">台本生成時に、貼り付けた参考動画それぞれの構成を要約します。</p></div>
+        </div>
+
+        <div class="block">
+          <div class="block-head">
+            <h3>タイトル案（10個）</h3>
+            <button type="button" id="copyTitlesButton" class="secondary">コピー</button>
+          </div>
+          <div class="status-line" id="titlesStatus"></div>
+          <ol id="titlesOutput" class="titles"></ol>
+        </div>
+
+        <div class="block">
+          <h3>サムネ案</h3>
+          <div class="status-line" id="thumbStatus"></div>
+          <div id="thumbOutput" class="thumb-grid"></div>
+        </div>
       </section>
     </main>
+
     <script src="script.js"></script>
   </body>
 </html>
