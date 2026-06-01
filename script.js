@@ -249,7 +249,7 @@ async function generateScript() {
   setStatus(scriptStatus, "生成中…", "loading");
   try {
     const out = await openaiChat([{ role: "system", content: sys }, { role: "user", content: user }]);
-    scriptOutput.value = out.script || "";
+    scriptOutput.value = String(out.script || "").replace(/\\n/g, "\n");
     localStorage.setItem(LS.script, scriptOutput.value);
     renderRefSummaries(Array.isArray(out.references) ? out.references : []);
     setStatus(scriptStatus, "生成しました ✓", "ok");
