@@ -226,8 +226,11 @@ async function generateScript() {
   persistRefs();
   const { theme, audience, tone } = getMeta();
   const usedRefs = refs.filter((r) => r.transcript.trim());
+  // TPM上限対策：各文字起こしを上限でカット（gpt-4oの毎分トークン制限超え対策）
+  const MAX_TRANSCRIPT = 4500;
+  const clip = (t) => (t.length > MAX_TRANSCRIPT ? t.slice(0, MAX_TRANSCRIPT) + "\n（…以下省略）" : t);
   const refsText = usedRefs.length
-    ? usedRefs.map((r, i) => `【参考${i + 1}${r.label ? "：" + r.label : ""}】\n${r.transcript}`).join("\n\n")
+    ? usedRefs.map((r, i) => `【参考${i + 1}${r.label ? "：" + r.label : ""}】\n${clip(r.transcript)}`).join("\n\n")
     : "（参考動画なし）";
   const sys =
     "あなたは一流のYouTube構成作家です。視聴維持率とクリック後の満足度が高い日本語の台本を作ります。参考動画は良い要素を抽出して活かしますが、丸写し・コピペは絶対にしません。";
